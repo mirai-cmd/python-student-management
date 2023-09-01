@@ -1,0 +1,2 @@
+# Python Student Management System
+This is a student management system built with python. TKinter is used for the GUI and SQLite3 as the database. Perfrms CRUD operations on students and also has admin login panel. 
