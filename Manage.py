@@ -1,13 +1,16 @@
-import tkinter as tk
 from tkinter import StringVar, ttk, messagebox
+from sys import exit
+import tkinter as tk
 import sqlite3
+import bcrypt
 
 admin = tk.Tk()
 admin.title("Admin Panel")
 admin.geometry("1920x1080")
-connection = sqlite3.connect('SQLite3\manage.db')
+connection = sqlite3.connect('sqlite-tools-win32-x86-3430100\manage.db')
 cursor = connection.cursor()
 
+USERS_TABLE="users"
 TABLE_NAME = "student_table"
 STUDENT_USN = "student_usn"
 STUDENT_NAME = "student_name"
@@ -72,7 +75,7 @@ def mainPanel():
     addressEntry.grid(row=4, column=1, padx=(0,10), pady = 20)
     usnEntry.grid(row=5, column=1, padx=(0,10), pady = 20)
     emailEntry.grid(row=6, column=1, padx=(0,10), pady = 20)
-    button = tk.Button(mainPage, text="Take input", command=lambda :takeNameInput(nameEntry,collegeEntry,addressEntry,phoneEntry,usnEntry,emailEntry))
+    button = tk.Button(mainPage, text="Save Details", command=lambda :saveInputDetails(nameEntry,collegeEntry,addressEntry,phoneEntry,usnEntry,emailEntry))
     button.grid(row=9, column=0, pady=30)
 
     displayButton = tk.Button(mainPage, text="Display result", command=lambda : displayResultWindow())
@@ -87,13 +90,15 @@ def mainPanel():
 def checkPass():
     user = usr.get()
     passwrd = passw.get()
-    if user == "admin" and passwrd == "admin123":
+    cursor=connection.execute(f"SELECT username,password FROM {USERS_TABLE} WHERE username='{user}';")
+    userData=cursor.fetchone()
+    if user == userData[0] and bcrypt.checkpw(passwrd.encode(),userData[1].encode()):
         mainPanel()
     else:
         messagebox.showinfo("Login Failed","Invalid username or password")
 
 
-def takeNameInput(nameEntry,collegeEntry,addressEntry,phoneEntry,usnEntry,emailEntry):
+def saveInputDetails(nameEntry,collegeEntry,addressEntry,phoneEntry,usnEntry,emailEntry):
     # global username, collegeName, phone, address
     global TABLE_NAME, STUDENT_NAME, STUDENT_COLLEGE, STUDENT_ADDRESS, STUDENT_PHONE,STUDENT_EMAIL,STUDENT_USN
     username = nameEntry.get()
@@ -109,10 +114,10 @@ def takeNameInput(nameEntry,collegeEntry,addressEntry,phoneEntry,usnEntry,emailE
     email = emailEntry.get()
     emailEntry.delete(0,tk.END)
     cursor.execute("INSERT INTO " + TABLE_NAME + " ( " + STUDENT_USN + ", " + STUDENT_NAME + ", "
-                       +STUDENT_COLLEGE + ", " + STUDENT_ADDRESS + ", " +
-                       STUDENT_PHONE + ", "  + STUDENT_EMAIL+ " ) VALUES ( '" + usn + "', '"
-                       + username + "', '" + collegeName + "', '" +
-                       address + "', " + str(phone) + " , '" + email + "'); ")
+                    +STUDENT_COLLEGE + ", " + STUDENT_ADDRESS + ", " +
+                    STUDENT_PHONE + ", "  + STUDENT_EMAIL+ " ) VALUES ( '" + usn + "', '"
+                    + username + "', '" + collegeName + "', '" +
+                    address + "', " + str(phone) + " , '" + email + "'); ")
     connection.commit()
     messagebox.showinfo("Success", "Data Saved Successfully.")
 
@@ -167,7 +172,6 @@ def displayResultWindow():
     
     cursor = connection.execute("SELECT * FROM " + TABLE_NAME + " ;")
     i = 0
-
     for row in cursor:
         tree.insert('', i,text =str(i+1),
                             values=(row[0], row[1],
